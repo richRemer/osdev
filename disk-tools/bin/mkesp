@@ -1,0 +1,92 @@
+#!/bin/bash -e
+
+declare cmd=mkesp
+declare -i min_size=33  # actual FAT min is 32.x MiB
+declare -i size=33
+declare -i argi=0
+declare out=
+
+mkesp () {
+    local -i size=$1
+    local output="$2"
+
+    dd if=/dev/zero of="$output" bs=1M count=$size
+    mkfs.fat -F32 "$output"
+    mmd -i "$output" ::/EFI
+    mmd -i "$output" ::/EFI/BOOT
+
+    echo created EFI System Partition image in $output
+}
+
+einvopt () {
+    echo "invalid option value -- $1" >&2
+    return 1
+}
+
+enoarg () {
+    echo "missing required argument -- $1" >&2
+    return 1
+}
+
+enoval () {
+    echo "missing required value -- $1" >&2
+    return 1
+}
+
+handle-arg () {
+    local arg="$1"
+
+    if test $argi -eq 0; then
+        out="$arg"
+    else
+        echo "unexpected argument -- $arg" >&2
+        return 1
+    fi
+
+    argi=$((argi+1))
+}
+
+handle-args () {
+    local arg
+
+    for arg in "$@"; do
+        handle-arg "$arg"
+    done
+}
+
+set-size () {
+    local -i new_size="$1"
+
+    if test $new_size -gt $min_size; then
+        size=$new_size
+    else
+        size=$min_size
+    fi
+}
+
+usage () {
+    echo "Usage:"
+    echo "  $cmd <file> [--size <MiB>]"
+    echo "  $cmd --help"
+}
+
+PATH="$PATH:/sbin"
+
+while test $# -gt 0; do
+    case "$1" in
+        --help)     usage; exit;;
+        --size=*)   set-size "${1#*=}"; shift;;
+        -s|--size)  set-size "$2"; shift 2 || enoval "$2";;
+        -s*)        set-size "${1:2}"; shift;;
+        --)         shift; handle-args "$@"; set --;;
+        --*)        einvopt "$1";;
+        -*)         einvopt "$1";;
+        *)          handle-arg "$1"; shift;;
+    esac
+done
+
+if test $argi -eq 0; then
+    enoarg "output file"
+fi
+
+mkesp $size "$out"
