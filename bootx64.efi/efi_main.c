@@ -6,7 +6,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     SIMPLE_TEXT_OUTPUT_INTERFACE* out = SystemTable->ConOut;
 
     out->ClearScreen(out);
-    out->SetMode(out, 0);
     out->OutputString(out, L"booting custom EFI\r\n");
 
     out->OutputString(out, uint32_str(out->Mode->Attribute));
