@@ -1,66 +1,72 @@
 #include "efi_string.h"
 
-static CHAR16* u_str = (CHAR16[17]){0};
-static const CHAR16* hexit = L"0123456789ABCDEF";
+//static const CHAR16* hexit = L"0123456789ABCDEF";
+static const CHAR16* digit = L"0123456789";
 
-CHAR16* uint8_str(uint8_t uint) {
-    int offset = 0;
+static uint8_t itou(CHAR16*, uint8_t, uint8_t, int64_t);
+static uint8_t utou(CHAR16*, uint8_t, uint8_t, uint64_t);
 
-    u_str[offset++] = hexit[0xF & (uint >> 4)];
-    u_str[offset++] = hexit[0xF & (uint >> 0)];
-    u_str[offset++] = 0;
+CHAR16* fmt(CHAR16* buffer, uint8_t size, const CHAR16* format, ...) {
+    int f_idx = 0;
+    int d_idx = 0;
 
-    return u_str;
+    va_list args;
+    va_start(args, format);
+
+    while (d_idx < size) {
+        if (format[f_idx] == '%') {
+            switch (format[++f_idx]) {
+                case '%': buffer[d_idx++] = '%'; break;
+                case 'b': d_idx = utou(buffer, size, d_idx, va_arg(args, int)); break;
+                case 'w': d_idx = utou(buffer, size, d_idx, va_arg(args, int)); break;
+                case 'd': d_idx = utou(buffer, size, d_idx, va_arg(args, uint32_t)); break;
+                case 'q': d_idx = utou(buffer, size, d_idx, va_arg(args, uint64_t)); break;
+                default:
+                    buffer[d_idx++] = '%';
+                    buffer[d_idx++] = format[f_idx];
+            }
+
+            f_idx++;
+        } else if (format[f_idx] == '\0') {
+            buffer[d_idx++] = format[f_idx++];
+            break;
+        } else {
+            buffer[d_idx++] = format[f_idx++];
+        }
+    }
+
+    va_end(args);
+
+    // ensure buffer always null-terminated
+    buffer[size-1] = '\0';
+
+    return buffer;
 }
 
-CHAR16* uint16_str(uint16_t uint) {
-    int offset = 0;
+static uint8_t itou(CHAR16* buffer, uint8_t size, uint8_t offset, int64_t sint) {
+    if (offset < size && sint < 0) {
+        buffer[offset++] = '-';
+    }
 
-    u_str[offset++] = hexit[0xF & (uint >> 12)];
-    u_str[offset++] = hexit[0xF & (uint >> 8)];
-    u_str[offset++] = hexit[0xF & (uint >> 4)];
-    u_str[offset++] = hexit[0xF & (uint >> 0)];
-    u_str[offset++] = 0;
-
-    return u_str;
+    return utou(buffer, size, offset, sint < 0 ? -sint : sint);
 }
 
-CHAR16* uint32_str(uint32_t uint) {
-    int offset = 0;
+static uint8_t utou(CHAR16* buffer, uint8_t size, uint8_t offset, uint64_t uint) {
+    uint64_t sig;
+    uint64_t factor;
 
-    u_str[offset++] = hexit[0xF & (uint >> 28)];
-    u_str[offset++] = hexit[0xF & (uint >> 24)];
-    u_str[offset++] = hexit[0xF & (uint >> 20)];
-    u_str[offset++] = hexit[0xF & (uint >> 16)];
-    u_str[offset++] = hexit[0xF & (uint >> 12)];
-    u_str[offset++] = hexit[0xF & (uint >> 8)];
-    u_str[offset++] = hexit[0xF & (uint >> 4)];
-    u_str[offset++] = hexit[0xF & (uint >> 0)];
-    u_str[offset++] = 0;
+    while (uint > 0 && offset < size) {
+        sig = uint;
+        factor = 1;
 
-    return u_str;
-}
+        while (sig >= 10) {
+            sig /= 10;
+            factor *= 10;
+        }
 
-CHAR16* uint64_str(uint64_t uint) {
-    int offset = 0;
+        buffer[offset++] = digit[sig];
+        uint -= sig * factor;
+    }
 
-    u_str[offset++] = hexit[0xF & (uint >> 60)];
-    u_str[offset++] = hexit[0xF & (uint >> 56)];
-    u_str[offset++] = hexit[0xF & (uint >> 52)];
-    u_str[offset++] = hexit[0xF & (uint >> 48)];
-    u_str[offset++] = hexit[0xF & (uint >> 44)];
-    u_str[offset++] = hexit[0xF & (uint >> 40)];
-    u_str[offset++] = hexit[0xF & (uint >> 36)];
-    u_str[offset++] = hexit[0xF & (uint >> 32)];
-    u_str[offset++] = hexit[0xF & (uint >> 28)];
-    u_str[offset++] = hexit[0xF & (uint >> 24)];
-    u_str[offset++] = hexit[0xF & (uint >> 20)];
-    u_str[offset++] = hexit[0xF & (uint >> 16)];
-    u_str[offset++] = hexit[0xF & (uint >> 12)];
-    u_str[offset++] = hexit[0xF & (uint >> 8)];
-    u_str[offset++] = hexit[0xF & (uint >> 4)];
-    u_str[offset++] = hexit[0xF & (uint >> 0)];
-    u_str[offset++] = 0;
-
-    return u_str;
+    return offset;
 }

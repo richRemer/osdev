@@ -4,40 +4,24 @@
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     SIMPLE_TEXT_OUTPUT_INTERFACE* out = SystemTable->ConOut;
+    SIMPLE_TEXT_OUTPUT_MODE* mode = out->Mode;
+    CHAR16 buf[100];
 
     out->ClearScreen(out);
     out->OutputString(out, L"booting custom EFI\r\n");
-
-    out->OutputString(out, uint32_str(out->Mode->Attribute));
-    out->OutputString(out, L" (Attribute)\r\n");
-
-    out->OutputString(out, uint32_str(out->Mode->CursorColumn));
-    out->OutputString(out, L" (CursorColumn)\r\n");
-
-    out->OutputString(out, uint32_str(out->Mode->CursorRow));
-    out->OutputString(out, L" (CursorRow)\r\n");
-
-    out->OutputString(out, uint8_str(out->Mode->CursorVisible));
-    out->OutputString(out, L" (CursorVisible)\r\n");
-
-    out->OutputString(out, uint32_str(out->Mode->MaxMode));
-    out->OutputString(out, L" (MaxMode)\r\n");
-
-    out->OutputString(out, uint32_str(out->Mode->Mode));
-    out->OutputString(out, L" (Mode)\r\n");
+    out->OutputString(out, fmt(buf, 100, L"Attribute: %d\r\n", mode->Attribute));
+    out->OutputString(out, fmt(buf, 100, L"CursorColumn: %d\r\n", mode->CursorColumn));
+    out->OutputString(out, fmt(buf, 100, L"CursorRow: %d\r\n", mode->CursorRow));
+    out->OutputString(out, fmt(buf, 100, L"CursorVisible: %b\r\n", mode->CursorVisible));
+    out->OutputString(out, fmt(buf, 100, L"MaxMode: %d\r\n", mode->MaxMode));
+    out->OutputString(out, fmt(buf, 100, L"Mode: %d\r\n", mode->Mode));
 
     for (INT32 mode=0; mode<=out->Mode->MaxMode; mode++) {
         UINTN cols;
         UINTN rows;
 
         out->QueryMode(out, mode, &cols, &rows);
-        out->OutputString(out, L"Mode ");
-        out->OutputString(out, uint32_str(mode));
-        out->OutputString(out, L" [");
-        out->OutputString(out, uint64_str(cols));
-        out->OutputString(out, L"x");
-        out->OutputString(out, uint64_str(rows));
-        out->OutputString(out, L"]\r\n");
+        out->OutputString(out, fmt(buf, 100, L"Mode %d [%q x %q]\r\n", mode, cols, rows));
     }
 
     out->EnableCursor(out, TRUE);
