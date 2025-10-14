@@ -26,6 +26,20 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     out->OutputString(out, uint32_str(out->Mode->Mode));
     out->OutputString(out, L" (Mode)\r\n");
 
+    for (INT32 mode=0; mode<=out->Mode->MaxMode; mode++) {
+        UINTN cols;
+        UINTN rows;
+
+        out->QueryMode(out, mode, &cols, &rows);
+        out->OutputString(out, L"Mode ");
+        out->OutputString(out, uint32_str(mode));
+        out->OutputString(out, L" [");
+        out->OutputString(out, uint64_str(cols));
+        out->OutputString(out, L"x");
+        out->OutputString(out, uint64_str(rows));
+        out->OutputString(out, L"]\r\n");
+    }
+
     out->EnableCursor(out, TRUE);
 
     for (;;) ;
