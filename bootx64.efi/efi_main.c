@@ -35,3 +35,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 // TODO: the following does nothing
 //  SIMPLE_TEXT_OUTPUT_INTERFACE* err = SystemTable->StdErr;
 //  err->OutputString(err, L"bootloader does nothing\r\n");
+//
+// TODO: figure out how TestString works
+// TODO: the following does nothing
+//  out->TestString(out, L"Test String\r\n");
