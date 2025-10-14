@@ -52,20 +52,21 @@ static uint8_t itou(CHAR16* buffer, uint8_t size, uint8_t offset, int64_t sint) 
 }
 
 static uint8_t utou(CHAR16* buffer, uint8_t size, uint8_t offset, uint64_t uint) {
-    uint64_t sig;
-    uint64_t factor;
+    CHAR16 chars[20];
+    int charidx = 20;
 
-    while (uint > 0 && offset < size) {
-        sig = uint;
-        factor = 1;
-
-        while (sig >= 10) {
-            sig /= 10;
-            factor *= 10;
+    if (uint == 0 && offset < size) {
+        buffer[offset++] = '0';
+    } else {
+        while (uint > 0) {
+            uint8_t value = uint % 10;
+            uint /= 10;
+            chars[--charidx] = digit[value];
         }
 
-        buffer[offset++] = digit[sig];
-        uint -= sig * factor;
+        while (charidx < 20 && offset < size) {
+            buffer[offset++] = chars[charidx++];
+        }
     }
 
     return offset;
