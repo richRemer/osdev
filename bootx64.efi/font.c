@@ -1,6 +1,37 @@
 #include "font.h"
 #include "efi_lib.h"
 
+static bool font_handle_key(App*, EFI_INPUT_KEY);
+static void font_init_view(App*);
+static void font_refresh_view(App*);
+
+App font_create_app(FontView* view) {
+    return (App){
+        .init_view = font_init_view,
+        .refresh_view = font_refresh_view,
+        .handle_key = font_handle_key,
+        .state = view,
+    };
+}
+
+static bool font_handle_key(App* app, EFI_INPUT_KEY key) {
+    FontView* view = app->state;
+
+    switch (key.UnicodeChar) {
+        case '\0':
+            switch (key.ScanCode) {
+                case 3: font_view_next_page(view); break;
+                case 4: font_view_prev_page(view); break;
+                default: return FALSE;
+            }
+            break;
+        case 'q': app_quit(app); break;
+        default: return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void font_init_view(App* app) {
     efi_cursor_to(0, 2);
 
@@ -36,31 +67,3 @@ static void font_refresh_view(App* app) {
     efi_cursor_to(46, 20);
     efi_out_style(EFI_WHITE, L"%B", next_page);
 }
-
-static bool font_handle_key(App* app, EFI_INPUT_KEY key) {
-    FontView* view = app->state;
-
-    switch (key.UnicodeChar) {
-        case '\0':
-            switch (key.ScanCode) {
-                case 3: font_view_next_page(view); break;
-                case 4: font_view_prev_page(view); break;
-                default: return FALSE;
-            }
-            break;
-        case 'q': app_quit(app); break;
-        default: return FALSE;
-    }
-
-    return TRUE;
-}
-
-App font_create_app(FontView* view) {
-    return (App){
-        .init_view = font_init_view,
-        .refresh_view = font_refresh_view,
-        .handle_key = font_handle_key,
-        .state = view,
-    };
-}
-

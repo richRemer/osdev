@@ -2,6 +2,30 @@
 #include "font.h"
 #include "efi_lib.h"
 
+static bool browser_handle_key(App*, EFI_INPUT_KEY);
+static void browser_init_view(App*);
+static void browser_refresh_view(App*);
+static void browser_run_app(App*, App*);
+
+App browser_create_app(BrowserView* view) {
+    return (App){
+        .init_view = browser_init_view,
+        .refresh_view = browser_refresh_view,
+        .handle_key = browser_handle_key,
+        .state = view,
+    };
+}
+
+static bool browser_handle_key(App* app, EFI_INPUT_KEY key) {
+    switch (key.UnicodeChar) {
+        case 'f': browser_view_show_font(app->state); break;
+        case 'q': app_quit(app); break;
+        default: return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void browser_init_view(App* app) {
     efi_out(L"\r\n");
     efi_out_style(EFI_WHITE, L"Choose one of the following\r\n");
@@ -25,28 +49,8 @@ static void browser_refresh_view(App* app) {
     browser_view_show_browser(view);
 }
 
-static bool browser_handle_key(App* app, EFI_INPUT_KEY key) {
-    switch (key.UnicodeChar) {
-        case 'f': browser_view_show_font(app->state); break;
-        case 'q': app_quit(app); break;
-        default: return FALSE;
-    }
-
-    return TRUE;
-}
-
-static bool browser_run_app(App* app, App* run_app) {
+static void browser_run_app(App* app, App* run_app) {
     app_run(run_app);
     efi_clear_screen();
     browser_init_view(app);
 }
-
-App browser_create_app(BrowserView* view) {
-    return (App){
-        .init_view = browser_init_view,
-        .refresh_view = browser_refresh_view,
-        .handle_key = browser_handle_key,
-        .state = view,
-    };
-}
-
