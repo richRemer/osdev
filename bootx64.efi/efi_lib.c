@@ -39,13 +39,16 @@ void efi_out(const CHAR16* format, ...) {
 
 EFI_INPUT_KEY efi_read_key() {
     SIMPLE_INPUT_INTERFACE* input = efi->ConIn;
+    EFI_EVENT wait = input->WaitForKey;
     EFI_INPUT_KEY key;
+    EFI_STATUS status;
+    UINTN index;
 
-    // TODO: remove this once verified unnecessary
-    key.ScanCode = 0;
-    key.UnicodeChar = '\0';
+    status = efi->BootServices->WaitForEvent(1, &wait, &index);
 
-    input->ReadKeyStroke(input, &key);
+    if (!EFI_ERROR(status)) {
+        input->ReadKeyStroke(input, &key);
+    }
 
     return key;
 }
