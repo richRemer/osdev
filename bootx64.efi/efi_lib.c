@@ -16,6 +16,10 @@ void efi_cursor_enable() {
     efi->ConOut->EnableCursor(efi->ConOut, TRUE);
 }
 
+void efi_cursor_to(uint8_t col, uint8_t row) {
+    efi->ConOut->SetCursorPosition(efi->ConOut, col, row);
+}
+
 void efi_hang() {
     for (;;) ;
 }
