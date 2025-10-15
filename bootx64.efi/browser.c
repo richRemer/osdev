@@ -18,7 +18,7 @@ static void browser_refresh_view(App* app) {
             break;
         case BrowserViewShowFont:
             App font_app = font_create_app(&view->font);
-            app_run(&font_app);
+            browser_run_app(app, &font_app);
             break;
     }
 
@@ -33,6 +33,12 @@ static bool browser_handle_key(App* app, EFI_INPUT_KEY key) {
     }
 
     return TRUE;
+}
+
+static bool browser_run_app(App* app, App* run_app) {
+    app_run(run_app);
+    efi_clear_screen();
+    browser_init_view(app);
 }
 
 App browser_create_app(BrowserView* view) {
