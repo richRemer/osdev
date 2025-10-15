@@ -1,5 +1,4 @@
 #include "font.h"
-#include "font_view.h"
 #include "efi_lib.h"
 
 static void font_init_view(App* app) {

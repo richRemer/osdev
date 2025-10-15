@@ -1,4 +1,4 @@
-#include "browser_view.h"
+#include "view.h"
 
 BrowserView browser_view_create() {
     return (BrowserView){
@@ -24,4 +24,12 @@ BrowserViewShow browser_view_showing(BrowserView* view) {
         case BrowserViewShowFont:
         default: return BrowserViewShowFont;
     }
+}
+
+void font_view_next_page(FontView* view) {
+    view->page++;
+}
+
+void font_view_prev_page(FontView* view) {
+    view->page--;
 }
