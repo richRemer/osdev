@@ -36,3 +36,16 @@ void efi_out(const CHAR16* format, ...) {
 
     efi->ConOut->OutputString(efi->ConOut, (CHAR16*)buf);
 }
+
+EFI_INPUT_KEY efi_read_key() {
+    SIMPLE_INPUT_INTERFACE* input = efi->ConIn;
+    EFI_INPUT_KEY key;
+
+    // TODO: remove this once verified unnecessary
+    key.ScanCode = 0;
+    key.UnicodeChar = '\0';
+
+    input->ReadKeyStroke(input, &key);
+
+    return key;
+}

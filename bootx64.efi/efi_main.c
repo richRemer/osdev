@@ -7,6 +7,11 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
     efi_init(ImageHandle, SystemTable);
     efi_clear_screen();
     efi_out(L"Generic EFI version 0.1...\r\n");
+
+    efi_out(L"reading key...");
+    EFI_INPUT_KEY key = efi_read_key();
+    efi_out(L"got key (Scan/Char): %W/%W.\r\n", key.ScanCode, key.UnicodeChar);
+
     efi_hang();
 
     return EFI_SUCCESS;
