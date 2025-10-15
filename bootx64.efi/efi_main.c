@@ -6,6 +6,7 @@
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     efi_init(ImageHandle, SystemTable);
     efi_clear_screen();
+    efi_watchdog_disable();
     efi_out(L"Generic EFI version 0.1\r\n");
 
     BrowserView app_view = browser_view_create();

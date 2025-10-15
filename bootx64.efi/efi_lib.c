@@ -72,3 +72,7 @@ EFI_INPUT_KEY efi_read_key() {
 
     return key;
 }
+
+void efi_watchdog_disable() {
+    efi->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
+}
