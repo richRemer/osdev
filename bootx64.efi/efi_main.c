@@ -30,7 +30,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 
 static void enable_cursor(EFI_SYSTEM_TABLE* SystemTable) {
     SIMPLE_TEXT_OUTPUT_INTERFACE* out = SystemTable->ConOut;
-    
+
     out->EnableCursor(out, TRUE);
 }
 
@@ -80,11 +80,11 @@ static void print_mem_map(EFI_SYSTEM_TABLE* SystemTable) {
 
     for (int i=0; i<MemoryMapSize/DescriptorSize; i++) {
         out->OutputString(out, MemDescriptor);
-        out->OutputString(out, fmt(buf, 100, L"-Type: %d\r\b", MemDesc->Type));
-        out->OutputString(out, fmt(buf, 100, L"-Physical Start: %Q\r\b", MemDesc->PhysicalStart));
-        out->OutputString(out, fmt(buf, 100, L"-Virtual Start: %Q\r\b", MemDesc->VirtualStart));
-        out->OutputString(out, fmt(buf, 100, L"-Number Of Pages: %q\r\b", MemDesc->NumberOfPages));
-        out->OutputString(out, fmt(buf, 100, L"-Attribute: %q\r\b", MemDesc->Attribute));
+        out->OutputString(out, fmt(buf, 100, L"-Type: %d\r\n", MemDesc->Type));
+        out->OutputString(out, fmt(buf, 100, L"-Physical Start: %Q\r\n", MemDesc->PhysicalStart));
+        out->OutputString(out, fmt(buf, 100, L"-Virtual Start: %Q\r\n", MemDesc->VirtualStart));
+        out->OutputString(out, fmt(buf, 100, L"-Number Of Pages: %q\r\n", MemDesc->NumberOfPages));
+        out->OutputString(out, fmt(buf, 100, L"-Attribute: %q\r\n", MemDesc->Attribute));
     }
 }
 
@@ -110,9 +110,9 @@ static void print_modes(EFI_SYSTEM_TABLE* SystemTable) {
         UINTN rows;
 
         out->QueryMode(out, mode, &cols, &rows);
-        
+
         fmt(buf, 100, L"-Mode %d ( %q x %q )\r\n", mode, cols, rows);
-        
+
         out->OutputString(out, buf);
     }
 }
