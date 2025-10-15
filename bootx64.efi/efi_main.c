@@ -5,7 +5,7 @@
 static CHAR16* Booting = L"Booting custom EFI\r\n";
 static CHAR16* DisplayMode = L"Mode %d ( %q x %q )\r\n";
 static CHAR16* MapLoaded = L"Memory map loaded\r\n";
-static CHAR16* MemDescriptor = L"Memory Descriptor:\r\n";
+static CHAR16* MemDescriptor = L"  (%d) %Q/%Q [%q pages] %q\r\n";
 
 static void enable_cursor(EFI_SYSTEM_TABLE*);
 static void print_mem_map(EFI_SYSTEM_TABLE*);
@@ -79,12 +79,11 @@ static void print_mem_map(EFI_SYSTEM_TABLE* SystemTable) {
     EFI_MEMORY_DESCRIPTOR* MemDesc = MemoryMap;
 
     for (int i=0; i<MemoryMapSize/DescriptorSize; i++) {
-        out->OutputString(out, MemDescriptor);
-        out->OutputString(out, fmt(buf, 100, L"-Type: %d\r\n", MemDesc->Type));
-        out->OutputString(out, fmt(buf, 100, L"-Physical Start: %Q\r\n", MemDesc->PhysicalStart));
-        out->OutputString(out, fmt(buf, 100, L"-Virtual Start: %Q\r\n", MemDesc->VirtualStart));
-        out->OutputString(out, fmt(buf, 100, L"-Number Of Pages: %q\r\n", MemDesc->NumberOfPages));
-        out->OutputString(out, fmt(buf, 100, L"-Attribute: %q\r\n", MemDesc->Attribute));
+        out->OutputString(out, fmt(buf, 100, MemDescriptor,
+            MemDesc->Type, MemDesc->PhysicalStart, MemDesc->VirtualStart,
+            MemDesc->NumberOfPages, MemDesc->Attribute));
+
+        MemDesc = (EFI_MEMORY_DESCRIPTOR*)((uint8_t*)MemDesc + DescriptorSize);
     }
 }
 
