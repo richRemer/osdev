@@ -45,7 +45,7 @@ void efi_out_style(uint64_t style, const CHAR16* format, ...) {
     efi->ConOut->SetAttribute(efi->ConOut, style);
 
     va_list args;
-    v_start(args, format);
+    va_start(args, format);
     vfmt((CHAR16*)buf, 255, format, args);
     va_end(args);
 
