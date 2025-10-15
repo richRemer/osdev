@@ -6,13 +6,15 @@ static void font_init_view(App* app) {
 
     for (int i=0; i<128; i++) {
         efi_out(L"    %B");
-        if (i % 8 == 7) efi_out(L"\r\n");
+        if (i % 8 == 7) efi_out(L"  \r\n");
     }
 }
 
 static void font_refresh_view(App* app) {
     FontView* view = app->state;
     uint16_t page = view->page;
+    uint8_t last_page = view->page - 1;
+    uint8_t next_page = view->page + 1;
     CHAR16 chr[2];
 
     chr[1] = '\0';
@@ -26,16 +28,28 @@ static void font_refresh_view(App* app) {
             efi_out(chr);
         }
     }
+
+    efi_cursor_to(4, 12);
+    efi_out_style(EFI_WHITE, L"%B", last_page);
+    efi_cursor_to(25, 12);
+    efi_out_style(EFI_WHITE, L"%B", page);
+    efi_cursor_to(46, 12);
+    efi_out_style(EFI_WHITE, L"%B", next_page);
 }
 
 static bool font_handle_key(App* app, EFI_INPUT_KEY key) {
+    FontView* view = app->state;
+
     switch (key.UnicodeChar) {
+        case '\0':
+            switch (key.ScanCode) {
+                case 3: font_view_next_page(view); break;
+                case 4: font_view_prev_page(view); break;
+                default: return FALSE;
+            }
+            break;
         case 'q': app_quit(app); break;
-        //default: return FALSE;
-        // TODO: pagination
-        default:
-            efi_cursor_to(0, 0);
-            efi_out(L"%W/%W", key.ScanCode, key.UnicodeChar);
+        default: return FALSE;
     }
 
     return TRUE;
