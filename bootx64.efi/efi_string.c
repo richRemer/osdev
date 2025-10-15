@@ -12,11 +12,19 @@ static uint8_t wtou(CHAR16*, uint8_t, uint8_t, uint16_t);
 static uint8_t xtou(CHAR16*, uint8_t, uint8_t, uint64_t, uint8_t);
 
 CHAR16* fmt(CHAR16* buffer, uint8_t size, const CHAR16* format, ...) {
-    int f_idx = 0;
-    int d_idx = 0;
-
     va_list args;
     va_start(args, format);
+
+    vfmt(buffer, size, format, args);
+
+    va_end(args);
+
+    return buffer;
+}
+
+CHAR16* vfmt(CHAR16* buffer, uint8_t size, const CHAR16* format, va_list args) {
+    int f_idx = 0;
+    int d_idx = 0;
 
     while (d_idx < size) {
         if (format[f_idx] == '%') {
@@ -43,8 +51,6 @@ CHAR16* fmt(CHAR16* buffer, uint8_t size, const CHAR16* format, ...) {
             buffer[d_idx++] = format[f_idx++];
         }
     }
-
-    va_end(args);
 
     // ensure buffer always null-terminated
     buffer[size-1] = '\0';
