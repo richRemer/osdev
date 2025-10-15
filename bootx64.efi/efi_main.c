@@ -3,17 +3,37 @@
 #include "efi_lib.h"
 #include "efi_string.h"
 
+static void ascii_table();
+
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     efi_init(ImageHandle, SystemTable);
     efi_clear_screen();
     efi_out(L"Generic EFI version 0.1...\r\n");
 
-    EFI_INPUT_KEY key = efi_read_key();
+    while (TRUE) {
+        EFI_INPUT_KEY key = efi_read_key();
 
-    efi_out(L".\r\n");
+        switch (key.UnicodeChar) {
+            case 'A':
+            case 'a': ascii_table(); break;
+            case 'Q':
+            case 'q': return EFI_SUCCESS;
+        }
+    }
+
     efi_hang();
 
     return EFI_SUCCESS;
+}
+
+static void ascii_table() {
+    CHAR16* format = L"  %B .";
+
+    for (int i=0; i<128; i++) {
+        format[5] = i;
+        efi_out(format, i);
+        if (i % 8 == 7) efi_out(L"\r\n");
+    }
 }
 
 // TODO: figure out how StdErr works
