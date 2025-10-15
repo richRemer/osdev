@@ -9,4 +9,5 @@ void efi_cursor_enable();
 void efi_hang();
 void efi_init(EFI_HANDLE, EFI_SYSTEM_TABLE*);
 void efi_out(const CHAR16*, ...);
+void efi_out_style(uint64_t, const CHAR16*, ...);
 EFI_INPUT_KEY efi_read_key();

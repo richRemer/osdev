@@ -8,7 +8,10 @@ static void ascii_table();
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     efi_init(ImageHandle, SystemTable);
     efi_clear_screen();
-    efi_out(L"Generic EFI version 0.1...\r\n");
+
+    efi_out(L"Generic ");
+    efi_out_style(EFI_LIGHTBLUE, L"EFI");
+    efi_out(L" version 0.1...\r\n");
 
     while (TRUE) {
         EFI_INPUT_KEY key = efi_read_key();
