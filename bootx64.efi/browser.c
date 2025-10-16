@@ -32,15 +32,15 @@ static void browser_init_view(App* app) {
     efi_out_style(EFI_WHITE, L"Choose");
 
     efi_cursor_to(12, 11);
-    efi_out_style(EFI_GREEN, L"f");
+    efi_out_style(EFI_LIGHTGREEN, L"f");
     efi_out(L"  Font Viewer");
 
     efi_cursor_to(12, 12);
-    efi_out_style(EFI_GREEN, L"u");
+    efi_out_style(EFI_LIGHTGREEN, L"u");
     efi_out(L"  Exit to system UEFI");
 
     efi_cursor_to(12, 13);
-    efi_out_style(EFI_GREEN, L"q");
+    efi_out_style(EFI_LIGHTGREEN, L"q");
     efi_out(L"  Shutdown");
 }
 
