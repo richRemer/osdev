@@ -19,7 +19,8 @@ App browser_create_app(BrowserView* view) {
 static bool browser_handle_key(App* app, EFI_INPUT_KEY key) {
     switch (key.UnicodeChar) {
         case 'f': browser_view_show_font(app->state); break;
-        case 'q': app_quit(app); break;
+        case 'u': app_quit(app); break;
+        case 'q': efi_reset_shutdown(); break;
         default: return FALSE;
     }
 
@@ -27,11 +28,20 @@ static bool browser_handle_key(App* app, EFI_INPUT_KEY key) {
 }
 
 static void browser_init_view(App* app) {
-    efi_out(L"\r\n");
-    efi_out_style(EFI_WHITE, L"Choose one of the following\r\n");
-    efi_out(L"  "); efi_out_style(EFI_GREEN, L"F"); efi_out(L"ont viewer\r\n");
-    efi_out(L"  "); efi_out_style(EFI_GREEN, L"Q"); efi_out(L"uit\r\n");
-    efi_out_style(EFI_WHITE, L"Choose an option from above\r\n");
+    efi_cursor_to(10, 10);
+    efi_out_style(EFI_WHITE, L"Choose");
+
+    efi_cursor_to(12, 11);
+    efi_out_style(EFI_GREEN, L"f");
+    efi_out(L"  Font Viewer");
+
+    efi_cursor_to(12, 12);
+    efi_out_style(EFI_GREEN, L"u");
+    efi_out(L"  Exit to system UEFI");
+
+    efi_cursor_to(12, 13);
+    efi_out_style(EFI_GREEN, L"q");
+    efi_out(L"  Shutdown");
 }
 
 static void browser_refresh_view(App* app) {

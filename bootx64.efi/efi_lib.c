@@ -73,6 +73,22 @@ EFI_INPUT_KEY efi_read_key() {
     return key;
 }
 
+void efi_reset(EFI_RESET_TYPE type) {
+    efi->RuntimeServices->ResetSystem(type, EFI_SUCCESS, 0, NULL);
+}
+
+void efi_reset_cold() {
+    efi_reset(EfiResetCold);
+}
+
+void efi_reset_shutdown() {
+    efi_reset(EfiResetShutdown);
+}
+
+void efi_reset_warm() {
+    efi_reset(EfiResetWarm);
+}
+
 void efi_watchdog_disable() {
     efi->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 }
