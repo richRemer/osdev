@@ -62,8 +62,8 @@ static void font_refresh_view(App* app) {
 
     efi_cursor_to(4, 20);
     efi_out_style(EFI_WHITE, L"%B", last_page);
-    efi_cursor_to(25, 20);
+    efi_cursor_to(26, 20);
     efi_out_style(EFI_WHITE, L"%B", page);
-    efi_cursor_to(46, 20);
+    efi_cursor_to(48, 20);
     efi_out_style(EFI_WHITE, L"%B", next_page);
 }
