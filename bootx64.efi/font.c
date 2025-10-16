@@ -50,7 +50,7 @@ static void font_refresh_view(App* app) {
 
     chr[1] = '\0';
     
-    for (uint16_t row=0; row<8; row++) {
+    for (uint16_t row=0; row<16; row++) {
         for (uint16_t col=0; col<16; col++) {
             chr[0] = (page << 8) | (row << 4) | col;
             efi_cursor_to(6*col+7, 2+row);
