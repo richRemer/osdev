@@ -36,7 +36,7 @@ static void font_init_view(App* app) {
     efi_cursor_to(0, 2);
 
     for (int i=0; i<128; i++) {
-        efi_out(L"    %B");
+        efi_out(L"    %B", i);
         if (i % 8 == 7) efi_out(L"  \r\n");
     }
 }
