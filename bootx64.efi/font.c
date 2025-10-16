@@ -35,9 +35,9 @@ static bool font_handle_key(App* app, EFI_INPUT_KEY key) {
 static void font_init_view(App* app) {
     efi_cursor_to(0, 2);
 
-    for (int i=0; i<128; i++) {
+    for (int i=0; i<256; i++) {
         efi_out(L"    %B", i);
-        if (i % 8 == 7) efi_out(L"  \r\n");
+        if (i % 16 == 15) efi_out(L"  \r\n");
     }
 }
 
@@ -51,7 +51,7 @@ static void font_refresh_view(App* app) {
     chr[1] = '\0';
     
     for (uint16_t row=0; row<8; row++) {
-        for (uint16_t col=0; col<8; col++) {
+        for (uint16_t col=0; col<16; col++) {
             chr[0] = (page << 8) | (row << 4) | col;
             efi_cursor_to(6*col+7, 2+row);
             efi_out(L" ");
@@ -62,8 +62,8 @@ static void font_refresh_view(App* app) {
 
     efi_cursor_to(4, 20);
     efi_out_style(EFI_WHITE, L"%B", last_page);
-    efi_cursor_to(26, 20);
+    efi_cursor_to(53, 20);
     efi_out_style(EFI_WHITE, L"%B", page);
-    efi_cursor_to(48, 20);
+    efi_cursor_to(92, 20);
     efi_out_style(EFI_WHITE, L"%B", next_page);
 }
