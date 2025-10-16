@@ -64,10 +64,10 @@ static void font_refresh_view(App* app) {
     efi_out_style(EFI_LIGHTGREEN, L"\u25C4");
     efi_out_style(EFI_WHITE, L" %B", last_page);
 
-    efi_cursor_to(55, 20);
+    efi_cursor_to(50, 20);
     efi_out_style(EFI_WHITE, L"%B", page);
     
     efi_cursor_to(94, 20);
     efi_out_style(EFI_WHITE, L"%B ", next_page);
-    efi_out_style(EFI_LIGHTGREEN, L"\x25\xBA");
+    efi_out_style(EFI_LIGHTGREEN, L"\u25BA");
 }
