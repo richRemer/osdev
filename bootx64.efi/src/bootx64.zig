@@ -1,7 +1,10 @@
 const std = @import("std");
+const io = @import("io.zig");
+const config = @import("config.zig");
 const elf = std.elf;
 const unicode = std.unicode;
 const uefi = std.os.uefi;
+const Console = io.Console;
 const SimpleFileSystem = uefi.protocol.SimpleFileSystem;
 const File = uefi.protocol.File;
 
@@ -24,24 +27,34 @@ pub fn main() void {
     @panic("loader returned unexpectedly");
 }
 
-fn load() !void {
+fn load() BootError!void {
     var phys_address: u64 = 0x100000; // 1 MiB minimum base address
     var free_pages: u64 = 0;
     var vaddr_offset: u64 = 0;
     var kernel_address: u64 = 0;
 
     const allocator = uefi.pool_allocator;
+    const in = uefi.system_table.con_in.?;
+    const out = uefi.system_table.con_out.?;
+    const console = Console.init(in, out);
     const boot = uefi.system_table.boot_services.?;
     const mmap_info = boot.getMemoryMapInfo() catch return BootError.MemoryMapInfo;
     const mmap_size = mmap_info.descriptor_size * mmap_info.len;
     const mmap_buffer = try allocator.alloc(u8, mmap_size);
     defer allocator.free(mmap_buffer);
 
-    const mmap = boot.getMemoryMap(@alignCast(mmap_buffer)) catch return BootError.MemoryMap;
+    const mmap = boot.getMemoryMap(@alignCast(mmap_buffer)) catch |err| {
+        console.printf("{s}\n", .{@errorName(err)});
+        return BootError.MemoryMap;
+    };
 
     // find highest physical address in map to place kernel
     var mmap_it = mmap.iterator();
     while (mmap_it.next()) |mem| {
+        if (config.debug) {
+            console.printf("mem {}\r\n", .{mem});
+        }
+
         if (mem.type == .conventional_memory and mem.physical_start >= phys_address) {
             phys_address = mem.physical_start;
             free_pages = mem.number_of_pages;
