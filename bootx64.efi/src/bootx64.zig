@@ -8,6 +8,8 @@ const Console = io.Console;
 const SimpleFileSystem = uefi.protocol.SimpleFileSystem;
 const File = uefi.protocol.File;
 
+const page_size = 4096;
+
 pub const BootError = error{
     ELFHeader,
     ELFLoadSegment,
@@ -27,6 +29,15 @@ pub fn main() void {
     @panic("loader returned unexpectedly");
 }
 
+fn flatten(pages: [][page_size]u8) []u8 {
+    var flat: []u8 = &.{};
+
+    flat.ptr = @ptrCast(pages.ptr);
+    flat.len = pages.len * page_size;
+
+    return flat;
+}
+
 fn load() BootError!void {
     var phys_address: u64 = 0x100000; // 1 MiB minimum base address
     var free_pages: u64 = 0;
@@ -40,9 +51,16 @@ fn load() BootError!void {
     const boot = uefi.system_table.boot_services.?;
     const mmap_info = boot.getMemoryMapInfo() catch return BootError.MemoryMapInfo;
     const mmap_size = mmap_info.descriptor_size * mmap_info.len;
-    const mmap_buffer = try allocator.alloc(u8, mmap_size);
-    defer allocator.free(mmap_buffer);
 
+    //const mmap_buffer = try allocator.alloc(u8, mmap_size);
+    const mmap_pages = boot.allocatePages(
+        .any,
+        .loader_data,
+        (mmap_size + page_size - 1) / page_size,
+    ) catch return BootError.OutOfMemory;
+    defer boot.freePages(mmap_pages) catch {};
+
+    const mmap_buffer = flatten(mmap_pages);
     const mmap = boot.getMemoryMap(@alignCast(mmap_buffer)) catch |err| {
         console.printf("{s}\r\n", .{@errorName(err)});
         console.printf("{}\r\n", .{mmap_info});
@@ -77,9 +95,6 @@ fn load() BootError!void {
     const headers_size = elf_header.phoff + prog_headers_size;
     const headers_buffer = try allocator.alloc(u8, headers_size);
     defer allocator.free(headers_buffer);
-
-    const prog_headers_buffer = try allocator.alloc(u8, prog_headers_size);
-    defer allocator.free(prog_headers_buffer);
 
     var ph_it = elf_header.iterateProgramHeadersBuffer(headers_buffer);
     var first_segment = true;
@@ -135,7 +150,7 @@ fn load_segment(
     var segment: []u8 = &.{};
 
     segment.ptr = @ptrCast(pages.ptr);
-    segment.len = pages.len * 4096;
+    segment.len = pages.len * page_size;
 
     try file.setPosition(offset);
     _ = try file.read(segment[0..length]);
