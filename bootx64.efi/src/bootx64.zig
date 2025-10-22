@@ -45,6 +45,8 @@ fn load() BootError!void {
 
     const mmap = boot.getMemoryMap(@alignCast(mmap_buffer)) catch |err| {
         console.printf("{s}\r\n", .{@errorName(err)});
+        console.printf("{}\r\n", .{mmap_info});
+        console.printf("{d}/{d}\r\n", .{ mmap_buffer.len, mmap_size });
         return BootError.MemoryMap;
     };
 
