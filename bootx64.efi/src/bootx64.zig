@@ -4,6 +4,7 @@ const config = @import("config.zig");
 const elf = std.elf;
 const unicode = std.unicode;
 const uefi = std.os.uefi;
+const Allocator = std.mem.Allocator;
 const Console = io.Console;
 const SimpleFileSystem = uefi.protocol.SimpleFileSystem;
 const File = uefi.protocol.File;
@@ -38,6 +39,17 @@ fn flatten(pages: [][page_size]u8) []u8 {
     return flat;
 }
 
+fn handle_error(
+    console: Console,
+    err: anyerror,
+    boot_err: BootError,
+) BootError!void {
+    console.printf("{s}", .{@errorName(err)});
+    console.printf("{}", .{err});
+
+    return boot_err;
+}
+
 fn load() BootError!void {
     var phys_address: u64 = 0x100000; // 1 MiB minimum base address
     var free_pages: u64 = 0;
@@ -49,7 +61,9 @@ fn load() BootError!void {
     const out = uefi.system_table.con_out.?;
     const console = Console.init(in, out);
     const boot = uefi.system_table.boot_services.?;
-    const mmap_info = boot.getMemoryMapInfo() catch return BootError.MemoryMapInfo;
+    const mmap_info = boot.getMemoryMapInfo() catch |err| {
+        return handle_error(console, err, BootError.MemoryMapInfo);
+    };
     const mmap_size = mmap_info.descriptor_size * mmap_info.len;
 
     //const mmap_buffer = try allocator.alloc(u8, mmap_size);
@@ -57,15 +71,14 @@ fn load() BootError!void {
         .any,
         .loader_data,
         (mmap_size + page_size - 1) / page_size,
-    ) catch return BootError.OutOfMemory;
+    ) catch |err| {
+        return handle_error(console, err, BootError.OutOfMemory);
+    };
     defer boot.freePages(mmap_pages) catch {};
 
     const mmap_buffer = flatten(mmap_pages);
     const mmap = boot.getMemoryMap(@alignCast(mmap_buffer)) catch |err| {
-        console.printf("{s}\r\n", .{@errorName(err)});
-        console.printf("{}\r\n", .{mmap_info});
-        console.printf("{d}/{d}\r\n", .{ mmap_buffer.len, mmap_size });
-        return BootError.MemoryMap;
+        return handle_error(console, err, BootError.MemoryMap);
     };
 
     // find highest physical address in map to place kernel
@@ -81,16 +94,24 @@ fn load() BootError!void {
         }
     }
 
-    const protocol = boot.locateProtocol(SimpleFileSystem, null) catch return BootError.LocateProtocol;
+    const protocol = boot.locateProtocol(SimpleFileSystem, null) catch |err| {
+        return handle_error(console, err, BootError.LocateProtocol);
+    };
     const disk = protocol.?;
-    const esp = disk.openVolume() catch return BootError.OpenVolume;
+    const esp = disk.openVolume() catch |err| {
+        return handle_error(console, err, BootError.OpenVolume);
+    };
     defer esp.close() catch {};
 
     const kernel_path = unicode.utf8ToUtf16LeStringLiteral("\\kernel.bin");
-    const kernel_file = esp.open(kernel_path, .read, .{ .read_only = true }) catch return BootError.OpenKernel;
+    const kernel_file = esp.open(kernel_path, .read, .{ .read_only = true }) catch |err| {
+        return handle_error(console, err, BootError.OpenKernel);
+    };
     defer kernel_file.close() catch {};
 
-    const elf_header = read_elf_header(kernel_file) catch return BootError.ELFHeader;
+    const elf_header = read_elf_header(kernel_file) catch |err| {
+        return handle_error(console, err, BootError.ELFHeader);
+    };
     const prog_headers_size = elf_header.phnum * elf_header.phentsize;
     const headers_size = elf_header.phoff + prog_headers_size;
     const headers_buffer = try allocator.alloc(u8, headers_size);
@@ -113,7 +134,9 @@ fn load() BootError!void {
                 segment.p_filesz,
                 segment.p_memsz,
                 segment.p_vaddr - vaddr_offset,
-            ) catch return BootError.ELFLoadSegment;
+            ) catch |err| {
+                return handle_error(console, err, BootError.ELFLoadSegment);
+            };
         }
     }
 
