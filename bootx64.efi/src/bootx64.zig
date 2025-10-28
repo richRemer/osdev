@@ -39,17 +39,6 @@ fn flatten(pages: [][page_size]u8) []u8 {
     return flat;
 }
 
-fn handle_error(
-    console: Console,
-    err: anyerror,
-    boot_err: BootError,
-) BootError!void {
-    console.printf("{s}", .{@errorName(err)});
-    console.printf("{}", .{err});
-
-    return boot_err;
-}
-
 fn load() BootError!void {
     var phys_address: u64 = 0x100000; // 1 MiB minimum base address
     var free_pages: u64 = 0;
@@ -60,67 +49,94 @@ fn load() BootError!void {
     const in = uefi.system_table.con_in.?;
     const out = uefi.system_table.con_out.?;
     const console = Console.init(in, out);
+
+    console.log("bootloader started", .{});
+
     const boot = uefi.system_table.boot_services.?;
     const mmap_info = boot.getMemoryMapInfo() catch |err| {
-        return handle_error(console, err, BootError.MemoryMapInfo);
+        console.err("failed to retrieve memory map info", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.MemoryMapInfo;
     };
-    const mmap_size = mmap_info.descriptor_size * mmap_info.len;
+    console.dbg("retrieved memory map info", .{});
 
-    //const mmap_buffer = try allocator.alloc(u8, mmap_size);
+    const mmap_size = mmap_info.descriptor_size * mmap_info.len;
     const mmap_pages = boot.allocatePages(
         .any,
         .loader_data,
         (mmap_size + page_size - 1) / page_size,
     ) catch |err| {
-        return handle_error(console, err, BootError.OutOfMemory);
+        console.err("could not allocate pages for memory map", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.OutOfMemory;
     };
     defer boot.freePages(mmap_pages) catch {};
+    console.dbg("memory map buffer allocated", .{});
 
     const mmap_buffer = flatten(mmap_pages);
     const mmap = boot.getMemoryMap(@alignCast(mmap_buffer)) catch |err| {
-        return handle_error(console, err, BootError.MemoryMap);
+        console.err("failed to get memory map", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.MemoryMap;
     };
+    console.dbg("memory map loaded", .{});
 
-    // find highest physical address in map to place kernel
     var mmap_it = mmap.iterator();
     while (mmap_it.next()) |mem| {
-        if (config.debug) {
-            console.printf("mem {}\r\n", .{mem});
-        }
+        console.dbg("{}", .{mem});
 
         if (mem.type == .conventional_memory and mem.physical_start >= phys_address) {
             phys_address = mem.physical_start;
             free_pages = mem.number_of_pages;
         }
     }
+    console.dbg("determined physical address of kernel", .{});
 
     const protocol = boot.locateProtocol(SimpleFileSystem, null) catch |err| {
-        return handle_error(console, err, BootError.LocateProtocol);
+        console.err("failed to locate Simple File System protocol", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.LocateProtocol;
     };
     const disk = protocol.?;
+    console.dbg("located Simple File System protocol", .{});
+
     const esp = disk.openVolume() catch |err| {
-        return handle_error(console, err, BootError.OpenVolume);
+        console.err("failed to open EFI System Partition", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.OpenVolume;
     };
     defer esp.close() catch {};
+    console.dbg("opened EFI System Partition", .{});
 
     const kernel_path = unicode.utf8ToUtf16LeStringLiteral("\\kernel.bin");
     const kernel_file = esp.open(kernel_path, .read, .{ .read_only = true }) catch |err| {
-        return handle_error(console, err, BootError.OpenKernel);
+        console.err("failed to open kernel", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.OpenKernel;
     };
     defer kernel_file.close() catch {};
+    console.dbg("opened kernel", .{});
 
     const elf_header = read_elf_header(kernel_file) catch |err| {
-        return handle_error(console, err, BootError.ELFHeader);
+        console.err("could not read ELF header from kernel", .{});
+        console.err("{s}", .{@errorName(err)});
+        return BootError.ELFHeader;
     };
+    console.dbg("kernel ELF header read", .{});
+
     const prog_headers_size = elf_header.phnum * elf_header.phentsize;
     const headers_size = elf_header.phoff + prog_headers_size;
     const headers_buffer = try allocator.alloc(u8, headers_size);
     defer allocator.free(headers_buffer);
+    console.dbg("allocated buffer for program headers", .{});
 
     var ph_it = elf_header.iterateProgramHeadersBuffer(headers_buffer);
     var first_segment = true;
+    console.dbg("iterating over program headers", .{});
     while (ph_it.next() catch return BootError.ELFProgramHeaders) |segment| {
         if (segment.p_type == elf.PT_LOAD) {
+            console.dbg("LOAD: {}", .{segment.p_vaddr});
+
             // assume first loaded segment is kernel
             if (first_segment) {
                 kernel_address = segment.p_vaddr;
@@ -135,8 +151,12 @@ fn load() BootError!void {
                 segment.p_memsz,
                 segment.p_vaddr - vaddr_offset,
             ) catch |err| {
-                return handle_error(console, err, BootError.ELFLoadSegment);
+                console.err("could not load segment", .{});
+                console.err("{s}", .{@errorName(err)});
+                return BootError.ELFLoadSegment;
             };
+        } else {
+            console.dbg("????: {}", .{segment.p_vaddr});
         }
     }
 
