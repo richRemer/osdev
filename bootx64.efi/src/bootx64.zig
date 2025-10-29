@@ -9,8 +9,10 @@ const Console = io.Console;
 const SimpleFileSystem = uefi.protocol.SimpleFileSystem;
 const File = uefi.protocol.File;
 
+/// AMD64 small page size
 const page_size = 4096;
 
+/// Error returned by the boot loader.
 pub const BootError = error{
     ELFHeader,
     ELFLoadSegment,
@@ -25,11 +27,13 @@ pub const BootError = error{
     OutOfMemory,
 };
 
+/// Boot loader entry point.
 pub fn main() void {
     load() catch |err| @panic(@errorName(err));
     @panic("loader returned unexpectedly");
 }
 
+/// Flatten a slice of pages into a slice of bytes.
 fn flatten(pages: [][page_size]u8) []u8 {
     var flat: []u8 = &.{};
 
@@ -39,6 +43,7 @@ fn flatten(pages: [][page_size]u8) []u8 {
     return flat;
 }
 
+/// Boot loader implementation.
 fn load() BootError!void {
     var phys_address: u64 = 0x100000; // 1 MiB minimum base address
     var free_pages: u64 = 0;
@@ -203,6 +208,7 @@ fn load() BootError!void {
     return BootError.KernelFound;
 }
 
+/// Load a segment from an ELF file into memory.
 fn loadSegment(
     /// open ELF file
     file: *File,
@@ -242,6 +248,7 @@ fn loadSegment(
     }
 }
 
+/// Read ELF header from an open file.
 fn readELFHeader(file: *File) !elf.Header {
     var header: elf.Elf64_Ehdr = undefined;
     const ptr: [*]u8 = @ptrCast(&header);
