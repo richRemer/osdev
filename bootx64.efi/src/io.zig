@@ -6,7 +6,7 @@ const SimpleTextInput = uefi.protocol.SimpleTextInput;
 const SimpleTextOutput = uefi.protocol.SimpleTextOutput;
 
 /// This value should be increased if receiving NoSpaceLeft error from printf
-pub const max_printf_size = 1024;
+pub const printf_buffer_size = 1024;
 
 pub const Console = struct {
     in: *SimpleTextInput,
@@ -37,7 +37,7 @@ pub const Console = struct {
     }
 
     pub fn printf(this: Console, comptime fmt: []const u8, args: anytype) void {
-        var buffer: [max_printf_size]u8 = undefined;
+        var buffer: [printf_buffer_size]u8 = undefined;
         const string = std.fmt.bufPrint(&buffer, fmt, args) catch unreachable;
         this.puts(string);
     }

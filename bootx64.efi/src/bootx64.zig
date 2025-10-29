@@ -153,7 +153,7 @@ fn load() BootError!void {
     defer kernel_file.close() catch {};
     console.dbg("opened kernel", .{});
 
-    const elf_header = read_elf_header(kernel_file) catch |err| {
+    const elf_header = readELFHeader(kernel_file) catch |err| {
         console.err("could not read ELF header from kernel", .{});
         console.err("{s}", .{@errorName(err)});
         return BootError.ELFHeader;
@@ -180,7 +180,7 @@ fn load() BootError!void {
                 first_segment = false;
             }
 
-            load_segment(
+            loadSegment(
                 kernel_file,
                 segment.p_offset,
                 segment.p_filesz,
@@ -203,7 +203,7 @@ fn load() BootError!void {
     return BootError.KernelFound;
 }
 
-fn load_segment(
+fn loadSegment(
     /// open ELF file
     file: *File,
     /// offset into file where segment begins
@@ -242,7 +242,7 @@ fn load_segment(
     }
 }
 
-fn read_elf_header(file: *File) !elf.Header {
+fn readELFHeader(file: *File) !elf.Header {
     var header: elf.Elf64_Ehdr = undefined;
     const ptr: [*]u8 = @ptrCast(&header);
     const slice: []u8 = ptr[0..@sizeOf(elf.Elf64_Ehdr)];
