@@ -83,7 +83,43 @@ fn load() BootError!void {
 
     var mmap_it = mmap.iterator();
     while (mmap_it.next()) |mem| {
-        console.dbg("{}", .{mem});
+        switch (mem.type) {
+            // ACPI reserved
+            .reserved_memory_type,
+            .runtime_services_code,
+            .runtime_services_data,
+            .unusable_memory,
+            .memory_mapped_io,
+            .memory_mapped_io_port_space,
+            .pal_code,
+            // usable after reading ACPI tables
+            .acpi_reclaim_memory,
+            // need to map, but not usable
+            .acpi_memory_nvs,
+            // non-volatile storage for EFI
+            .persistent_memory,
+            => {},
+            // usable
+            .loader_code,
+            .loader_data,
+            .boot_services_code,
+            .boot_services_data,
+            .conventional_memory,
+            => {
+                console.dbg(
+                    "{X} @ {X} [attr: {X}] ({} pages) {s}",
+                    .{
+                        mem.physical_start,
+                        mem.virtual_start,
+                        @as(u64, @bitCast(mem.attribute)),
+                        mem.number_of_pages,
+                        @tagName(mem.type),
+                    },
+                );
+            },
+            // remaining types reserved for OS, OEM, or future use
+            else => {},
+        }
 
         if (mem.type == .conventional_memory and mem.physical_start >= phys_address) {
             phys_address = mem.physical_start;

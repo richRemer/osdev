@@ -18,15 +18,15 @@ pub const Console = struct {
     }
 
     pub fn dbg(this: Console, comptime fmt: []const u8, args: anytype) void {
-        if (config.debug) this.printf("BOOTDBG:" ++ fmt ++ "\r\n", args);
+        if (config.debug) this.printf(fmt ++ "\r\n", args);
     }
 
     pub fn err(this: Console, comptime fmt: []const u8, args: anytype) void {
-        this.printf("BOOTERR:" ++ fmt ++ "\r\n", args);
+        this.printf("ERROR:" ++ fmt ++ "\r\n", args);
     }
 
     pub fn log(this: Console, comptime fmt: []const u8, args: anytype) void {
-        this.printf("BOOTLOG:" ++ fmt ++ "\r\n", args);
+        this.printf(fmt ++ "\r\n", args);
     }
 
     pub fn puts(this: Console, string: []const u8) void {
