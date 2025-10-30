@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+(
+    echo vm=EFI;
+) > $(dirname "$0")/build.conf
