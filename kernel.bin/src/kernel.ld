@@ -1,12 +1,13 @@
 KERNEL_PHYS_START = 1M;
 KERNEL_STACK_SIZE = 0x4000;
 
-ENTRY(kmain)
+ENTRY(_start)
 
 SECTIONS {
     . = KERNEL_PHYS_START;
 
     .text : ALIGN(4K) {
+        KEEP(*(.multiboot))
         *(.text*)
     }
 

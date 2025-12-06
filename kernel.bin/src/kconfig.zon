@@ -1,0 +1,6 @@
+.{
+    // Set the kernel stack size
+    .stack_size = 16384,
+    // Set the kernel stack alignment
+    .stack_align = 16,
+}
